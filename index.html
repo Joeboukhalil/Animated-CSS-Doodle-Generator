@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Animated CSS Doodle Generator</title>
+
+<!-- Image export -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #f3f3f3;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 12px;
+}
+
+button {
+  padding: 8px 14px;
+  margin-right: 6px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #111;
+  color: white;
+}
+
+button:hover { opacity: 0.85; }
+
+.preview-box {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+  width: 360px;
+}
+
+#preview {
+  width: 300px;
+  height: 200px;
+  margin: auto;
+  overflow: hidden;
+}
+
+.code-box {
+  margin-top: 14px;
+  background: #0f0f0f;
+  color: #dcdcdc;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎨 Animated CSS Doodle Generator</h1>
+
+<button onclick="generate()">Generate</button>
+<button onclick="copyCSS()">Copy CSS</button>
+<button onclick="downloadImage()">Download Image</button>
+
+<div class="preview-box">
+  <div id="preview"></div>
+
+  <div class="code-box">
+    <pre id="cssCode"></pre>
+  </div>
+</div>
+
+<script>
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomColor() {
+  return `hsl(${rand(0,360)}, ${rand(50,90)}%, ${rand(35,70)}%)`;
+}
+
+function randomShape() {
+  const shapes = ["circle", "square", "oval", "rounded", "blob"];
+  return shapes[rand(0, shapes.length - 1)];
+}
+
+function shapeRadius(shape) {
+  if (shape === "circle") return "50%";
+  if (shape === "square") return "4px";
+  if (shape === "oval") return "50% / 35%";
+  if (shape === "rounded") return rand(10, 30) + "px";
+  if (shape === "blob")
+    return `${rand(20,60)}% ${rand(20,60)}% ${rand(30,70)}% ${rand(30,70)}%`;
+}
+
+function generate() {
+  const bg = randomColor();
+  const shapeCount = rand(3, 7);
+
+  let shapesHTML = "";
+  let shapesCSS = "";
+
+  for (let i = 0; i < shapeCount; i++) {
+    const size = rand(40, 90);
+    const x = rand(0, 260);
+    const y = rand(0, 160);
+    const color = randomColor();
+    const shape = randomShape();
+    const duration = rand(6, 16);
+
+    shapesHTML += `<div class="shape s${i}"></div>\n`;
+
+    shapesCSS += `
+.s${i} {
+  width: ${size}px;
+  height: ${size}px;
+  background: ${color};
+  border-radius: ${shapeRadius(shape)};
+  position: absolute;
+  left: ${x}px;
+  top: ${y}px;
+  animation: float${i} ${duration}s ease-in-out infinite alternate;
+}
+
+@keyframes float${i} {
+  from { transform: translate(0,0) rotate(0deg); }
+  to { transform: translate(${rand(-30,30)}px, ${rand(-30,30)}px) rotate(${rand(-20,20)}deg); }
+}
+`;
+  }
+
+  const css = `
+:root {
+  --bg: ${bg};
+}
+
+.doodle {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+${shapesCSS}
+`;
+
+  document.getElementById("cssCode").textContent = css;
+
+  document.getElementById("preview").innerHTML = `
+    <div class="doodle">
+      ${shapesHTML}
+    </div>
+  `;
+
+  let style = document.getElementById("dynamicStyle");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "dynamicStyle";
+    document.head.appendChild(style);
+  }
+  style.innerHTML = css;
+}
+
+function copyCSS() {
+  navigator.clipboard.writeText(
+    document.getElementById("cssCode").textContent
+  );
+  alert("CSS copied!");
+}
+
+function downloadImage() {
+  html2canvas(document.getElementById("preview"), {
+    backgroundColor: null,
+    scale: 2
+  }).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "css-doodle.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
+}
+
+generate();
+</script>
+
+</body>
+</html>
